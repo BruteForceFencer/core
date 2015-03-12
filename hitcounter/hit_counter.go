@@ -2,8 +2,9 @@
 package hitcounter
 
 import (
+	"fmt"
+	"github.com/BruteForceFencer/core/logger"
 	"github.com/BruteForceFencer/core/message-server"
-	"log"
 	"os"
 	"time"
 )
@@ -12,7 +13,7 @@ import (
 type HitCounter struct {
 	Clock  *Clock
 	Count  *RunningCount
-	Logger *log.Logger
+	Logger *logger.Logger
 	*server.Server
 }
 
@@ -21,7 +22,7 @@ func NewHitCounter(directions []Direction) *HitCounter {
 	result := new(HitCounter)
 	result.Clock = NewClock()
 	result.Count = NewRunningCount(128, 24*time.Hour)
-	result.Logger = log.New(os.Stdout, "", log.LstdFlags)
+	result.Logger = logger.New(os.Stdout)
 	result.Server = server.New()
 
 	for i := range directions {
@@ -45,7 +46,7 @@ func makeRoute(hitCounter *HitCounter, dir *Direction) func(interface{}) bool {
 		hitCounter.Count.Inc()
 		valid := dir.Hit(hitCounter.Clock.GetTime(), val)
 		if !valid {
-			hitCounter.Logger.Printf("direction=%#v value=%#v\n", dir.Name, val)
+			hitCounter.Logger.Log(dir.Name, fmt.Sprint(val))
 		}
 
 		return valid
