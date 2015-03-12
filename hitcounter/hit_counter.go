@@ -11,9 +11,10 @@ import (
 
 // HitCounter is a server that tracks several directions.
 type HitCounter struct {
-	Clock  *Clock
-	Count  *RunningCount
-	Logger *logger.Logger
+	Clock      *Clock
+	Count      *RunningCount
+	Directions map[string]*Direction
+	Logger     *logger.Logger
 	*server.Server
 }
 
@@ -23,32 +24,42 @@ func NewHitCounter(directions []Direction) *HitCounter {
 	result.Clock = NewClock()
 	result.Count = NewRunningCount(128, 24*time.Hour)
 	result.Logger = logger.New(os.Stdout)
-	result.Server = server.New()
+	result.Server = &server.Server{
+		HandleFunc: result.handleRequest,
+	}
 
+	// We store the directions in a map instead of a slice for quick access.
+	result.Directions = make(map[string]*Direction)
 	for i := range directions {
-		// Add the route
-		result.Routes[directions[i].Name] = makeRoute(result, &directions[i])
+		dir := &directions[i]
 
-		// Schedule the cleanup
-		go func(dir *Direction) {
-			for {
-				dir.Store.CleanUp(result.Clock.GetTime())
-				time.Sleep(time.Duration(dir.CleanUpTime) * time.Second)
-			}
-		}(&directions[i])
+		result.Directions[dir.Name] = dir
+		result.scheduleCleanUp(dir)
 	}
 
 	return result
 }
 
-func makeRoute(hitCounter *HitCounter, dir *Direction) func(interface{}) bool {
-	return func(val interface{}) bool {
-		hitCounter.Count.Inc()
-		valid := dir.Hit(hitCounter.Clock.GetTime(), val)
-		if !valid {
-			hitCounter.Logger.Log(dir.Name, fmt.Sprint(val))
-		}
-
-		return valid
+func (h *HitCounter) handleRequest(direction string, value interface{}) bool {
+	// Make sure the direction exists.
+	dir, ok := h.Directions[direction]
+	if !ok {
+		return false
 	}
+
+	safe := dir.Hit(h.Clock.GetTime(), value)
+	if !safe {
+		h.Logger.Log(direction, fmt.Sprint(value))
+	}
+
+	return safe
+}
+
+func (h *HitCounter) scheduleCleanUp(dir *Direction) {
+	go func(dir *Direction) {
+		for {
+			dir.Store.CleanUp(h.Clock.GetTime())
+			time.Sleep(time.Duration(dir.CleanUpTime) * time.Second)
+		}
+	}(dir)
 }

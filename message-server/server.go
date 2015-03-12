@@ -18,15 +18,8 @@ import (
 
 // Server is a server that interprets requests according to the protocol.
 type Server struct {
-	Routes   map[string]func(interface{}) bool
-	listener net.Listener
-}
-
-// New returns an initialized *Server.
-func New() *Server {
-	return &Server{
-		Routes: make(map[string]func(interface{}) bool),
-	}
+	HandleFunc func(direction string, value interface{}) bool
+	listener   net.Listener
 }
 
 // Blocks and listens for requests.
@@ -60,14 +53,11 @@ func (s *Server) acceptRequests() {
 					return
 				}
 
-				// Check if the route exists.
-				if handler, ok := s.Routes[request.Direction]; ok {
-					response := handler(request.Value)
-					if response {
-						conn.Write([]byte("t"))
-					} else {
-						conn.Write([]byte("f"))
-					}
+				response := s.HandleFunc(request.Direction, request.Value)
+				if response {
+					conn.Write([]byte("t"))
+				} else {
+					conn.Write([]byte("f"))
 				}
 			}
 		}(conn)
