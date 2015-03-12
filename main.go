@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/JamesOwenHall/bfp/core/config"
-	"github.com/JamesOwenHall/bfp/core/dashboard"
-	"github.com/JamesOwenHall/bfp/core/hitcounter"
+	"github.com/BruteForceFencer/core/config"
+	"github.com/BruteForceFencer/core/dashboard"
+	"github.com/BruteForceFencer/core/hitcounter"
 	"os"
 	"os/signal"
 	"runtime"
@@ -22,7 +22,7 @@ func main() {
 
 	// Display version number
 	if *displayVersion {
-		fmt.Println("BFP core version", config.Version)
+		fmt.Println("BFF core version", config.Version)
 		fmt.Println("Copyright (C) James Hall 2015.")
 		return
 	}

@@ -7,14 +7,14 @@ const (
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard &middot; BFP</title>
+    <title>Dashboard &middot; BFF</title>
     <link rel="stylesheet" href="/core.css">
   </head>
   <body>
     <div class="container">
       <header>
         <div id="logo">
-          <h1>BFP</h1>
+          <h1>BFF</h1>
         </div>
       </header>
 

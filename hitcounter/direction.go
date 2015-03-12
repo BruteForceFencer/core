@@ -1,7 +1,7 @@
 package hitcounter
 
 import (
-	"github.com/JamesOwenHall/bfp/core/store"
+	"github.com/BruteForceFencer/core/store"
 )
 
 // Direction is a tracked resource.  See package config for definition of its
