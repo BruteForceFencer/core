@@ -17,6 +17,8 @@
 //     launch the dashboard (e.g. ":3000").  If omitted or blank, the dashboard
 //     will not be used.
 //
+//     - "log": {string} (optional) is the name of the file to write logs to.
+//
 //     - "directions": {array} (required) is the collection of directions you
 //     want to track.  Each element of the array is an object with the
 //     following members:
@@ -47,8 +49,11 @@
 package config
 
 import (
+	"fmt"
 	"github.com/BruteForceFencer/core/hitcounter"
+	"github.com/BruteForceFencer/core/logger"
 	"github.com/BruteForceFencer/core/store"
+	"os"
 )
 
 // Configuration is a struct that represents the contents of a configuration
@@ -58,6 +63,7 @@ type Configuration struct {
 	ListenAddress    string
 	ListenType       string
 	DashboardAddress string
+	Logger           *logger.Logger
 }
 
 // ReadConfig parses a configuration file and returns an instance of
@@ -77,6 +83,16 @@ func ReadConfig(filename string) (*Configuration, []error) {
 	result.DashboardAddress = parsed.DashboardAddress
 	result.Directions = make([]hitcounter.Direction, 0, len(parsed.Directions))
 
+	// Logger
+	if parsed.Log != "" {
+		file, err := os.OpenFile(parsed.Log, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		if err != nil {
+			return nil, []error{fmt.Errorf("unable to open file %s", parsed.Log)}
+		}
+		result.Logger = logger.New(file)
+	}
+
+	// Directions
 	for _, jsonDir := range parsed.Directions {
 		// Create the direction according to its type
 		dir := hitcounter.Direction{

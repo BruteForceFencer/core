@@ -13,6 +13,7 @@ type jsonConfiguration struct {
 	ListenAddress    string          `json:"listen address"`
 	ListenType       string          `json:"listen type"`
 	DashboardAddress string          `json:"dashboard address"`
+	Log              string          `json:"log"`
 }
 
 // jsonDirection is a struct that mirrors the direction objects as they should

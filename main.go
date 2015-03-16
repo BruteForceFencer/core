@@ -38,11 +38,17 @@ func main() {
 	}
 
 	// Create server
-	counter := hitcounter.NewHitCounter(configuration.Directions)
+	counter := hitcounter.NewHitCounter(
+		configuration.Directions,
+		configuration.Logger,
+	)
 	defer counter.Close()
 
 	// Start message server
-	err := counter.ListenAndServe(configuration.ListenType, configuration.ListenAddress)
+	err := counter.ListenAndServe(
+		configuration.ListenType,
+		configuration.ListenAddress,
+	)
 	if err == nil {
 		fmt.Fprintln(os.Stderr, "Listening for hits @", configuration.ListenAddress)
 	} else {

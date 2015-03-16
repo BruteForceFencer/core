@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/BruteForceFencer/core/logger"
 	"github.com/BruteForceFencer/core/message-server"
-	"os"
 	"time"
 )
 
@@ -19,11 +18,11 @@ type HitCounter struct {
 }
 
 // NewHitCounter returns an initialized *HitCounter.
-func NewHitCounter(directions []Direction) *HitCounter {
+func NewHitCounter(directions []Direction, l *logger.Logger) *HitCounter {
 	result := new(HitCounter)
 	result.Clock = NewClock()
 	result.Count = NewRunningCount(128, 24*time.Hour)
-	result.Logger = logger.New(os.Stdout)
+	result.Logger = l
 	result.Server = &server.Server{
 		HandleFunc: result.handleRequest,
 	}
@@ -48,7 +47,7 @@ func (h *HitCounter) handleRequest(direction string, value interface{}) bool {
 	}
 
 	safe := dir.Hit(h.Clock.GetTime(), value)
-	if !safe {
+	if !safe && h.Logger != nil {
 		h.Logger.Log(direction, fmt.Sprint(value))
 	}
 
