@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 )
 
@@ -18,6 +19,8 @@ func (j *jsonConfiguration) Validate() []error {
 	j.ListenType = strings.ToLower(j.ListenType)
 	if j.ListenType != "unix" && j.ListenType != "tcp" {
 		result = append(result, fmt.Errorf("unknown listen type %s", j.ListenType))
+	} else if j.ListenType == "unix" && runtime.GOOS == "windows" {
+		result = append(result, fmt.Errorf("listen type unix is not available on windows"))
 	}
 
 	// Required fields
