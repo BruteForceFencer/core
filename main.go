@@ -54,14 +54,13 @@ func initialize() {
 		Configuration.Logger,
 	)
 
-	// Start the server
+	// Create the server
 	Server = new(server.Server)
 	Server.HandleFunc = routeRequest
 
-	// Start the dashboard
+	// Create the dashboard
 	if Configuration.DashboardAddress != "" {
 		Dashboard = dashboard.New(Configuration, HitCounter)
-		go Dashboard.ListenAndServe()
 	}
 }
 
