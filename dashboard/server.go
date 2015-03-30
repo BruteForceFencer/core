@@ -31,9 +31,9 @@ func New(conf *config.Configuration, counter *hitcounter.HitCounter) *Server {
 	return result
 }
 
-// ListenAndServe starts the server in a new goroutine (non-blocking).
+// ListenAndServe blocks and listens for requests.
 func (s *Server) ListenAndServe() {
-	go s.Server.ListenAndServe()
+	s.Server.ListenAndServe()
 }
 
 func (s *Server) setupRoutes() {

@@ -6,13 +6,21 @@ import (
 	"github.com/BruteForceFencer/core/config"
 	"github.com/BruteForceFencer/core/dashboard"
 	"github.com/BruteForceFencer/core/hitcounter"
+	"github.com/BruteForceFencer/core/message-server"
 	"github.com/BruteForceFencer/core/version"
 	"os"
 	"os/signal"
 	"runtime"
 )
 
-func main() {
+var (
+	Configuration *config.Configuration
+	Dashboard     *dashboard.Server
+	HitCounter    *hitcounter.HitCounter
+	Server        *server.Server
+)
+
+func configure() {
 	// Setup multithreading
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -24,48 +32,65 @@ func main() {
 	// Display version number
 	if *displayVersion {
 		version.PrintVersion()
-		return
+		os.Exit(0)
 	}
 
 	// Read the configuration
-	configuration, errs := config.ReadConfig(*configFilename)
+	var errs []error
+	Configuration, errs = config.ReadConfig(*configFilename)
 	if len(errs) != 0 {
 		for _, err := range errs {
 			fmt.Fprintln(os.Stderr, "configuration error:", err)
 		}
 
-		return
+		os.Exit(1)
 	}
+}
 
-	// Create server
-	counter := hitcounter.NewHitCounter(
-		configuration.Directions,
-		configuration.Logger,
+func initialize() {
+	// Create the hit counter
+	HitCounter = hitcounter.NewHitCounter(
+		Configuration.Directions,
+		Configuration.Logger,
 	)
-	defer counter.Close()
 
-	// Start message server
-	err := counter.ListenAndServe(
-		configuration.ListenType,
-		configuration.ListenAddress,
+	// Start the server
+	Server = new(server.Server)
+	Server.HandleFunc = routeRequest
+
+	// Start the dashboard
+	if Configuration.DashboardAddress != "" {
+		Dashboard = dashboard.New(Configuration, HitCounter)
+		go Dashboard.ListenAndServe()
+	}
+}
+
+func start() {
+	go Server.ListenAndServe(
+		Configuration.ListenType,
+		Configuration.ListenAddress,
 	)
-	if err == nil {
-		fmt.Fprintln(os.Stderr, "Listening for hits @", configuration.ListenAddress)
-	} else {
-		fmt.Fprintln(os.Stderr, "Server error: can't listen @", configuration.ListenAddress)
-		return
-	}
 
-	// Start the dashboard server
-	var dash *dashboard.Server
-	if configuration.DashboardAddress != "" {
-		dash = dashboard.New(configuration, counter)
-		dash.ListenAndServe()
-		fmt.Fprintln(os.Stderr, "Dashboard listening @", configuration.DashboardAddress)
+	if Dashboard != nil {
+		go Dashboard.ListenAndServe()
 	}
+}
+
+func routeRequest(req *server.Request) bool {
+	return HitCounter.HandleRequest(req.Direction, req.Value)
+}
+
+func main() {
+	configure()
+	initialize()
+	start()
+
+	fmt.Fprintln(os.Stderr, "The server is running.")
 
 	// Capture interrupt signal so that the server closes properly
 	interrupts := make(chan os.Signal, 1)
 	signal.Notify(interrupts, os.Interrupt)
 	<-interrupts
+
+	Server.Close()
 }

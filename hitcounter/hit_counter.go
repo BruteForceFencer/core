@@ -4,7 +4,6 @@ package hitcounter
 import (
 	"fmt"
 	"github.com/BruteForceFencer/core/logger"
-	"github.com/BruteForceFencer/core/message-server"
 	"time"
 )
 
@@ -14,7 +13,6 @@ type HitCounter struct {
 	Count      *RunningCount
 	Directions map[string]*Direction
 	Logger     *logger.Logger
-	*server.Server
 }
 
 // NewHitCounter returns an initialized *HitCounter.
@@ -23,9 +21,6 @@ func NewHitCounter(directions []Direction, l *logger.Logger) *HitCounter {
 	result.Clock = NewClock()
 	result.Count = NewRunningCount(128, 24*time.Hour)
 	result.Logger = l
-	result.Server = &server.Server{
-		HandleFunc: result.handleRequest,
-	}
 
 	// We store the directions in a map instead of a slice for quick access.
 	result.Directions = make(map[string]*Direction)
@@ -39,7 +34,7 @@ func NewHitCounter(directions []Direction, l *logger.Logger) *HitCounter {
 	return result
 }
 
-func (h *HitCounter) handleRequest(direction string, value interface{}) bool {
+func (h *HitCounter) HandleRequest(direction string, value interface{}) bool {
 	// Make sure the direction exists.
 	dir, ok := h.Directions[direction]
 	if !ok {

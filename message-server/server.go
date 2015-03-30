@@ -18,7 +18,7 @@ import (
 
 // Server is a server that interprets requests according to the protocol.
 type Server struct {
-	HandleFunc func(direction string, value interface{}) bool
+	HandleFunc func(*Request) bool
 	listener   net.Listener
 }
 
@@ -53,7 +53,7 @@ func (s *Server) acceptRequests() {
 					return
 				}
 
-				response := s.HandleFunc(request.Direction, request.Value)
+				response := s.HandleFunc(request)
 				if response {
 					conn.Write([]byte("t"))
 				} else {
