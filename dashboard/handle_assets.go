@@ -1,8 +1,8 @@
 package dashboard
 
 import (
-	"github.com/BruteForceFencer/core/config"
 	"github.com/BruteForceFencer/core/hitcounter"
+	"github.com/BruteForceFencer/core/version"
 	"html/template"
 	"net/http"
 	"os"
@@ -37,7 +37,7 @@ func (s *Server) serveHomePage(w http.ResponseWriter, r *http.Request) {
 	}{
 		ListenAddress: s.conf.ListenAddress,
 		ListenType:    s.conf.ListenType,
-		Version:       config.Version,
+		Version:       version.Version,
 		Directions:    s.conf.Directions,
 	}
 

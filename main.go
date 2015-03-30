@@ -6,6 +6,7 @@ import (
 	"github.com/BruteForceFencer/core/config"
 	"github.com/BruteForceFencer/core/dashboard"
 	"github.com/BruteForceFencer/core/hitcounter"
+	"github.com/BruteForceFencer/core/version"
 	"os"
 	"os/signal"
 	"runtime"
@@ -22,8 +23,7 @@ func main() {
 
 	// Display version number
 	if *displayVersion {
-		fmt.Println("BFF core version", config.Version)
-		fmt.Println("Copyright (C) James Hall 2015.")
+		version.PrintVersion()
 		return
 	}
 
