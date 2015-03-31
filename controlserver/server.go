@@ -14,6 +14,7 @@ package controlserver
 import (
 	"log"
 	"net"
+	"os"
 )
 
 // Server is a server that interprets requests according to the protocol.
@@ -24,6 +25,11 @@ type Server struct {
 
 // Blocks and listens for requests.
 func (s *Server) ListenAndServe(typ, addr string) error {
+	// Remove any old socket.
+	if typ == "unix" {
+		os.Remove(addr)
+	}
+
 	// Start listening.
 	var err error
 	s.listener, err = net.Listen(typ, addr)
