@@ -10,11 +10,12 @@ import (
 	"path/filepath"
 )
 
-// installPath is the path to the BFF installation in slash form.
+// installPath is the path to the BFF installation.
 var installPath string
 
 func init() {
-	determineInstallPath()
+	// Arg[0] is assumed to be an absolute path.
+	installPath = filepath.Join(filepath.Dir(os.Args[0]), "..")
 }
 
 // HandleAssets serves the HTML, CSS and JS assets for the dashboard.
@@ -23,7 +24,7 @@ func (s *Server) HandleAssets(w http.ResponseWriter, r *http.Request) {
 		s.serveHomePage(w, r)
 	} else {
 		assetPath := path.Join("assets", r.URL.Path)
-		assetPath = filepath.FromSlash(fromInstallPath(assetPath))
+		assetPath = filepath.Join(installPath, filepath.FromSlash(assetPath))
 		http.ServeFile(w, r, assetPath)
 	}
 }
@@ -41,7 +42,7 @@ func (s *Server) serveHomePage(w http.ResponseWriter, r *http.Request) {
 		Directions:    s.conf.Directions,
 	}
 
-	htmlPath := filepath.FromSlash(fromInstallPath("assets/dashboard.html"))
+	htmlPath := filepath.Join(installPath, filepath.FromSlash("assets/dashboard.html"))
 	t, err := template.ParseFiles(htmlPath)
 	if err != nil {
 		http.Error(w, "Unable to find server files.", http.StatusInternalServerError)
@@ -49,28 +50,4 @@ func (s *Server) serveHomePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t.Execute(w, data)
-}
-
-// fromInstallPath returns the absolute path by appending p to the installation
-// path.  The result is in slash form.
-func fromInstallPath(p string) string {
-	return path.Join(installPath, p)
-}
-
-// determineInstallPath sets the installPath variable.
-func determineInstallPath() {
-	// The path to the executable binary.
-	var execPath string
-
-	// Argument 0 converted to slash notation.
-	arg0 := filepath.ToSlash(path.Clean(os.Args[0]))
-	if len(arg0) > 0 && arg0[0] == '/' {
-		// The 0th arg is the absolute path.
-		execPath = path.Clean(arg0)
-	} else {
-		wd, _ := os.Getwd()
-		execPath = path.Join(wd, arg0)
-	}
-
-	installPath = path.Dir(path.Dir(execPath))
 }
