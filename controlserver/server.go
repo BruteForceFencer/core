@@ -9,7 +9,7 @@
 //     error).
 //
 //     3. The client disconnects or goes again from step 1.
-package server
+package controlserver
 
 import (
 	"log"

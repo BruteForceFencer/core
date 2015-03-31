@@ -4,20 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/BruteForceFencer/core/config"
+	"github.com/BruteForceFencer/core/controlserver"
 	"github.com/BruteForceFencer/core/dashboard"
+	"github.com/BruteForceFencer/core/globals"
 	"github.com/BruteForceFencer/core/hitcounter"
-	"github.com/BruteForceFencer/core/message-server"
 	"github.com/BruteForceFencer/core/version"
 	"os"
 	"os/signal"
 	"runtime"
-)
-
-var (
-	Configuration *config.Configuration
-	Dashboard     *dashboard.Server
-	HitCounter    *hitcounter.HitCounter
-	Server        *server.Server
 )
 
 func configure() {
@@ -37,7 +31,7 @@ func configure() {
 
 	// Read the configuration
 	var errs []error
-	Configuration, errs = config.ReadConfig(*configFilename)
+	globals.Configuration, errs = config.ReadConfig(*configFilename)
 	if len(errs) != 0 {
 		for _, err := range errs {
 			fmt.Fprintln(os.Stderr, "configuration error:", err)
@@ -49,34 +43,44 @@ func configure() {
 
 func initialize() {
 	// Create the hit counter
-	HitCounter = hitcounter.NewHitCounter(
-		Configuration.Directions,
-		Configuration.Logger,
+	globals.HitCounter = hitcounter.NewHitCounter(
+		globals.Configuration.Directions,
+		globals.Configuration.Logger,
 	)
 
 	// Create the server
-	Server = new(server.Server)
-	Server.HandleFunc = routeRequest
+	globals.Server = new(controlserver.Server)
+	globals.Server.HandleFunc = routeRequest
 
 	// Create the dashboard
-	if Configuration.DashboardAddress != "" {
-		Dashboard = dashboard.New(Configuration, HitCounter)
+	if globals.Configuration.DashboardAddress != "" {
+		globals.Dashboard = dashboard.New(
+			globals.Configuration,
+			globals.HitCounter,
+		)
 	}
 }
 
 func start() {
-	go Server.ListenAndServe(
-		Configuration.ListenType,
-		Configuration.ListenAddress,
+	go globals.Server.ListenAndServe(
+		globals.Configuration.ListenType,
+		globals.Configuration.ListenAddress,
 	)
 
-	if Dashboard != nil {
-		go Dashboard.ListenAndServe()
+	if globals.Dashboard != nil {
+		go globals.Dashboard.ListenAndServe()
 	}
 }
 
-func routeRequest(req *server.Request) bool {
-	return HitCounter.HandleRequest(req.Direction, req.Value)
+func routeRequest(req *controlserver.Request) bool {
+	if req.Type == controlserver.HitRequest {
+		return globals.HitCounter.HandleRequest(req.Direction, req.Value)
+	} else if req.Type == controlserver.CommandRequest && req.Direction == "die" {
+		globals.Server.Close()
+		os.Exit(0)
+	}
+
+	return true
 }
 
 func main() {
@@ -91,5 +95,5 @@ func main() {
 	signal.Notify(interrupts, os.Interrupt)
 	<-interrupts
 
-	Server.Close()
+	globals.Server.Close()
 }
