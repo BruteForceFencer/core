@@ -15,12 +15,23 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 )
 
 // Server is a server that interprets requests according to the protocol.
 type Server struct {
-	HandleFunc func(*Request) bool
-	listener   net.Listener
+	HandleFunc      func(*Request) bool
+	AcceptedSources map[string]bool
+	listener        net.Listener
+}
+
+func New() *Server {
+	return &Server{
+		AcceptedSources: map[string]bool{
+			"":          true,
+			"127.0.0.1": true,
+		},
+	}
 }
 
 // Blocks and listens for requests.
@@ -50,6 +61,11 @@ func (s *Server) acceptRequests() {
 			continue
 		}
 
+		if !s.accepted(conn) {
+			conn.Close()
+			continue
+		}
+
 		// For performance, we launch every handler in its own goroutine.
 		go func(conn net.Conn) {
 			for {
@@ -68,6 +84,24 @@ func (s *Server) acceptRequests() {
 			}
 		}(conn)
 	}
+}
+
+// accepted returns true if the connection comes from a trusted source.
+func (s *Server) accepted(conn net.Conn) bool {
+	// Separate the ip address from the port.
+	addr := conn.RemoteAddr().String()
+	colonIndex := strings.Index(addr, ":")
+
+	// If there's no colon, then this request comes from a Unix socket.
+	if colonIndex == -1 {
+		allowed, ok := s.AcceptedSources[addr]
+		return allowed && ok
+	}
+
+	// Remove the port number from the end of the address.
+	addr = addr[0:colonIndex]
+	allowed, ok := s.AcceptedSources[addr]
+	return allowed && ok
 }
 
 // Close stops the server.

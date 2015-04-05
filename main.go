@@ -49,7 +49,7 @@ func initialize() {
 	)
 
 	// Create the server
-	globals.Server = new(controlserver.Server)
+	globals.Server = controlserver.New()
 	globals.Server.HandleFunc = routeRequest
 
 	// Create the dashboard
