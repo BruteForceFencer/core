@@ -63,6 +63,7 @@ type Configuration struct {
 	ListenAddress    string
 	ListenType       string
 	DashboardAddress string
+	AcceptedSources  []string
 	Logger           *logger.Logger
 }
 
@@ -82,6 +83,7 @@ func ReadConfig(filename string) (*Configuration, []error) {
 	result.ListenType = parsed.ListenType
 	result.DashboardAddress = parsed.DashboardAddress
 	result.Directions = make([]hitcounter.Direction, 0, len(parsed.Directions))
+	result.AcceptedSources = parsed.AcceptedSources
 
 	// Logger
 	if parsed.Log != "" {

@@ -52,6 +52,10 @@ func initialize() {
 	globals.Server = controlserver.New()
 	globals.Server.HandleFunc = routeRequest
 
+	for _, source := range globals.Configuration.AcceptedSources {
+		globals.Server.AcceptedSources[source] = true
+	}
+
 	// Create the dashboard
 	if globals.Configuration.DashboardAddress != "" {
 		globals.Dashboard = dashboard.New(

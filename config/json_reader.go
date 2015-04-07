@@ -13,6 +13,7 @@ type jsonConfiguration struct {
 	ListenAddress    string          `json:"listen address"`
 	ListenType       string          `json:"listen type"`
 	DashboardAddress string          `json:"dashboard address"`
+	AcceptedSources  []string        `json:"accepted sources"`
 	Log              string          `json:"log"`
 }
 
